@@ -24,7 +24,21 @@ const CAPTION = 'go touch grass';
 // most period-correct thing that can be done to a piece of text.
 const ARC = 'M 210 232 Q 600 118 990 232';
 
-export function backdropSVG() {
+// The unfurl card puts a large buddy list down the left, so the caption moves
+// right to clear it. Same drawing, different placement.
+const ARC_OG = 'M 500 240 Q 830 128 1160 240';
+
+/**
+ * @param {object} [opts]
+ * @param {boolean} [opts.og]  compose for the 1200x630 unfurl card
+ */
+export function backdropSVG({ og = false } = {}) {
+  const arc = og ? ARC_OG : ARC;
+  const fontSize = og ? 78 : 96;
+  return render(arc, fontSize);
+}
+
+function render(ARC, FONT_SIZE) {
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630"
     preserveAspectRatio="xMidYMid slice" class="backdrop-svg">
   <defs>
@@ -99,7 +113,7 @@ export function backdropSVG() {
 
   <!-- WordArt. Extruded down-right, gradient face, hard black outline. -->
   <g font-family="Impact, Haettenschweiler, 'Arial Black', sans-serif"
-     font-size="96" letter-spacing="1" text-anchor="middle">
+     font-size="${FONT_SIZE}" letter-spacing="1" text-anchor="middle">
     ${extrude(
       9,
       (dx, dy) =>
@@ -115,10 +129,10 @@ export function backdropSVG() {
 }
 
 /** Mount the wallpaper behind every window. */
-export function mountBackdrop() {
+export function mountBackdrop(opts) {
   const el = document.createElement('div');
   el.id = 'backdrop';
-  el.innerHTML = backdropSVG();
+  el.innerHTML = backdropSVG(opts);
   document.body.prepend(el);
   return el;
 }

@@ -5,6 +5,8 @@ your list is a language model running on your own graphics card.
 
 **Live:** https://tjw.dev/anomie/
 
+![The Anomie buddy list over a vector hills wallpaper reading "go touch grass"](screenshots/01-desktop.png)
+
 ---
 
 ## Artist statement
@@ -34,6 +36,21 @@ industrialization. The running man in the corner of this app fades a little
 further the longer you stay signed on.
 
 — Justin Walsh
+
+## Screenshots
+
+| | |
+|---|---|
+| ![A conversation with SunshineGrrl82](screenshots/02-conversation.png) | ![The buddy list on a phone](screenshots/03-mobile-buddylist.png) |
+| A conversation in progress. Every reply is real output from the model named in the status bar. | Below 768px the floating windows become full-bleed views. Same chrome, no desktop. |
+
+![The running man at three stages of session decay, then at 64, 32 and 16 pixels](screenshots/05-logo.png)
+
+Regenerate them with `npm run dev` in one terminal and `npm run shoot` in
+another. `tools/shoot.mjs` drives headless Chrome over the DevTools Protocol, so
+every image — including `public/og.png` — is a real render of the real app at an
+exact pixel size, and the unfurl card can't drift away from what the site
+actually looks like.
 
 ## Requirements
 
