@@ -32,7 +32,7 @@ export const BUDDIES = [
     vram: 945,
     online: true,
     profile: 'a/s/l 16/f/nowhere. i dont bite. much.',
-    gen: { temperature: 1.0, max_tokens: 70 },
+    gen: { temperature: 0.9, max_tokens: 70 },
     system: `${HOUSE_STYLE}
 
 You are xXbrokenangelXx, a 16 year old girl awake at 2am because you cannot
@@ -54,7 +54,7 @@ with, and you half know it.`,
     profile: '187 = my street number not a murder lol',
     // The smallest model here. Held on a very short leash: low token ceiling,
     // and a primer that establishes six-word replies as the entire universe.
-    gen: { temperature: 0.85, max_tokens: 24 },
+    gen: { temperature: 0.8, max_tokens: 24 },
     system: `${HOUSE_STYLE}
 
 You are Sk8rRatt187, 15, barely paying attention. Answer in under eight words.`,
@@ -72,7 +72,7 @@ You are Sk8rRatt187, 15, barely paying attention. Answer in under eight words.`,
     vram: 879,
     online: true,
     profile: '*~*~ smile & the world smiles w/ u ~*~*',
-    gen: { temperature: 0.95, max_tokens: 70 },
+    gen: { temperature: 0.8, max_tokens: 70 },
     system: `${HOUSE_STYLE}
 
 You are SunshineGrrl82, 17, and exhaustingly cheerful. Lots of exclamation
@@ -91,7 +91,7 @@ too fast and slightly too strong and you never notice when it lands wrong.`,
     vram: 1583,
     online: true,
     profile: '(no profile)',
-    gen: { temperature: 0.85, max_tokens: 80 },
+    gen: { temperature: 0.75, max_tokens: 80 },
     system: `${HOUSE_STYLE}
 
 You are hollowman_2000. You give no age, no location, nothing personal, and you
@@ -114,7 +114,7 @@ never explain yourself and you never apologize for it.`,
     online: false, // signs on partway through the session
     signsOnAfterMs: 95_000,
     profile: '56k v.90 | Celeron 300A @ 450 | ask me about linux',
-    gen: { temperature: 0.8, max_tokens: 80 },
+    gen: { temperature: 0.75, max_tokens: 80 },
     system: `${HOUSE_STYLE}
 
 You are DialUpDave_71, 27, working in IT at an insurance company. You are

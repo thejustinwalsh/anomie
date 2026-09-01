@@ -10,6 +10,14 @@
 let zTop = 100;
 const windows = new Set();
 
+/**
+ * Below this width the floating-window conceit is dropped and every window
+ * becomes a full-bleed view. Kept in sync with the media query in style.css.
+ */
+export function isCompactLayout() {
+  return window.matchMedia('(max-width: 767px)').matches;
+}
+
 function setActive(win) {
   windows.forEach((w) => w.el.classList.add('inactive'));
   win.el.classList.remove('inactive');
@@ -136,6 +144,8 @@ export function createWindow(opts) {
   bar.addEventListener('mousedown', (e) => {
     if (e.button !== 0) return;
     setActive(win);
+    // Full-bleed views have nowhere to be dragged to.
+    if (isCompactLayout()) return;
     drag = {
       dx: e.clientX - el.offsetLeft,
       dy: e.clientY - el.offsetTop,

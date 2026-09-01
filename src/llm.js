@@ -120,12 +120,14 @@ export function chat(modelId, messages, onDelta, opts = {}) {
     const stream = await engine.chat.completions.create({
       messages,
       stream: true,
-      temperature: opts.temperature ?? 0.9,
-      top_p: opts.top_p ?? 0.95,
-      // Small models love to echo their own last message back at you, and a
-      // buddy who repeats himself verbatim stops being a person immediately.
-      frequency_penalty: opts.frequency_penalty ?? 0.5,
-      presence_penalty: opts.presence_penalty ?? 0.6,
+      temperature: opts.temperature ?? 0.8,
+      top_p: opts.top_p ?? 0.9,
+      // Small models echo their own last message back at you, and a buddy who
+      // repeats himself verbatim stops being a person immediately. But push
+      // these past ~0.4 on a 1B model and it starts reaching for rare tokens:
+      // the voice survives and the sense doesn't.
+      frequency_penalty: opts.frequency_penalty ?? 0.3,
+      presence_penalty: opts.presence_penalty ?? 0.3,
       // Instant messages are short. Capping hard also keeps the small models
       // from wandering off into an essay.
       max_tokens: opts.max_tokens ?? 120,

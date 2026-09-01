@@ -3,6 +3,7 @@ import { showSignOn } from './ui/signon.js';
 import { createBuddyList } from './ui/buddylist.js';
 import { closeAllIMs } from './ui/imwindow.js';
 import { applyFavicon, runningManSVG } from './logo.js';
+import { mountBackdrop } from './backdrop.js';
 import * as sounds from './sounds.js';
 import * as store from './store.js';
 
@@ -24,7 +25,8 @@ function tickDecay() {
   const d = sessionDecay();
   applyFavicon(d);
   const headerLogo = document.querySelector('.bl-header .logo');
-  if (headerLogo) headerLogo.innerHTML = runningManSVG({ decay: d, color: '#000080' });
+  if (headerLogo)
+    headerLogo.innerHTML = runningManSVG({ decay: d, color: '#000080', compact: true });
 }
 
 function signOn(name) {
@@ -58,6 +60,7 @@ function colophon() {
 
 function boot() {
   applyFavicon(0);
+  mountBackdrop();
   colophon();
 
   // Autoplay policy: the audio context can only start inside a gesture.

@@ -8,7 +8,7 @@
  * The Family group is the piece's argument in one control: three real people,
  * permanently offline, one floor away.
  */
-import { createWindow, createMenuBar } from './window.js';
+import { createWindow, createMenuBar, isCompactLayout } from './window.js';
 import { BUDDIES, FAMILY } from '../buddies.js';
 import { runningManSVG } from '../logo.js';
 import * as store from '../store.js';
@@ -18,8 +18,10 @@ import { openIM } from './imwindow.js';
 
 const BL_ICON = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" shape-rendering="crispEdges"><rect x="2" y="1" width="12" height="14" fill="#fff" stroke="#000"/><rect x="4" y="4" width="8" height="1" fill="#000080"/><rect x="4" y="7" width="8" height="1" fill="#000080"/><rect x="4" y="10" width="6" height="1" fill="#808080"/></svg>`;
 
+// At 12px the four-copy trail turns to mush, so the list icons use the compact
+// lead-plus-two variant.
 const buddyIcon = (color) =>
-  `<span class="buddy-icon">${runningManSVG({ decay: 0, color })}</span>`;
+  `<span class="buddy-icon">${runningManSVG({ decay: 0, color, compact: true })}</span>`;
 
 export function createBuddyList({ onSignOff }) {
   const me = store.getScreenName();
@@ -99,7 +101,7 @@ export function createBuddyList({ onSignOff }) {
   header.className = 'bl-header';
   const logoWrap = document.createElement('span');
   logoWrap.className = 'logo';
-  logoWrap.innerHTML = runningManSVG({ decay: 0, color: '#000080' });
+  logoWrap.innerHTML = runningManSVG({ decay: 0, color: '#000080', compact: true });
   const whoWrap = document.createElement('div');
   whoWrap.style.minWidth = '0';
   whoWrap.innerHTML = `<div class="who">${me}</div><div class="sub">Anomie Instant Messenger</div>`;
@@ -161,11 +163,7 @@ export function createBuddyList({ onSignOff }) {
       (away ? `<span class="away-note">${away}</span>` : '') +
       (!away && !isOffline && !st.cached ? `<span class="away-note">(not downloaded)</span>` : '');
 
-    row.addEventListener('click', () => {
-      selected = buddy.screenName;
-      render();
-    });
-    row.addEventListener('dblclick', () => {
+    const activate = () => {
       if (isOffline) {
         sounds.play('error');
         dialog(
@@ -175,7 +173,15 @@ export function createBuddyList({ onSignOff }) {
         return;
       }
       openBuddy(buddy);
+    };
+
+    row.addEventListener('click', () => {
+      selected = buddy.screenName;
+      render();
+      // There is no double-click on a touchscreen; one tap opens.
+      if (isCompactLayout()) activate();
     });
+    row.addEventListener('dblclick', activate);
     return row;
   }
 
@@ -184,17 +190,20 @@ export function createBuddyList({ onSignOff }) {
     row.className = 'buddy-row offline' + (selected === person.screenName ? ' selected' : '');
     row.innerHTML =
       buddyIcon('#909090') + `<span class="name">${person.screenName}</span>`;
-    row.addEventListener('click', () => {
-      selected = person.screenName;
-      render();
-    });
-    row.addEventListener('dblclick', () => {
+    const activate = () => {
       sounds.play('error');
       dialog(
         'Anomie Instant Messenger',
         `${person.screenName} is not currently signed on.\n\nThey are ${person.note}.`
       );
+    };
+
+    row.addEventListener('click', () => {
+      selected = person.screenName;
+      render();
+      if (isCompactLayout()) activate();
     });
+    row.addEventListener('dblclick', activate);
     return row;
   }
 
@@ -293,6 +302,7 @@ export function createBuddyList({ onSignOff }) {
 export function dialog(title, message) {
   const win = createWindow({
     title,
+    className: 'dialog',
     width: 320,
     x: Math.round(window.innerWidth / 2 - 160),
     y: Math.round(window.innerHeight / 2 - 90),
