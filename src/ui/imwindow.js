@@ -4,6 +4,7 @@
  * the reason those buttons are memorable is that they were right there.
  */
 import { createWindow, createMenuBar } from './window.js';
+import { primeMessages } from '../buddies.js';
 import * as sounds from '../sounds.js';
 import * as store from '../store.js';
 import * as llm from '../llm.js';
@@ -483,7 +484,7 @@ export function openIM(buddy, deps = {}) {
     });
 
     const messages = [
-      { role: 'system', content: buddy.system },
+      ...primeMessages(buddy),
       ...store
         .getHistory(buddy.screenName)
         .slice(-CONTEXT_TURNS)
@@ -506,7 +507,7 @@ export function openIM(buddy, deps = {}) {
         const partial = cleanReply(full, buddy.screenName);
         line.querySelector('.msg').textContent = partial;
         history.scrollTop = history.scrollHeight;
-      });
+      }, buddy.gen);
 
       const clean = cleanReply(reply, buddy.screenName);
       if (line) {

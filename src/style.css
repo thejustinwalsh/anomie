@@ -139,6 +139,11 @@ svg {
 .title-btn {
   width: 16px;
   height: 14px;
+  /* Base `button` sets a 68x21 minimum for dialog buttons; caption buttons are
+     the one place that has to be smaller. */
+  min-width: 16px;
+  min-height: 14px;
+  flex: 0 0 16px;
   background: var(--face);
   border: none;
   padding: 0;
@@ -156,6 +161,7 @@ svg {
   box-shadow: inset -1px -1px var(--white), inset 1px 1px var(--black),
     inset -2px -2px var(--face-light), inset 2px 2px var(--gray);
   background-position: calc(50% + 1px) calc(50% + 1px);
+  padding: 0;
 }
 .title-btn.close {
   margin-left: 4px; /* the gap before Close, exactly as in 95 */

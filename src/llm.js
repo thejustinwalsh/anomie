@@ -122,6 +122,10 @@ export function chat(modelId, messages, onDelta, opts = {}) {
       stream: true,
       temperature: opts.temperature ?? 0.9,
       top_p: opts.top_p ?? 0.95,
+      // Small models love to echo their own last message back at you, and a
+      // buddy who repeats himself verbatim stops being a person immediately.
+      frequency_penalty: opts.frequency_penalty ?? 0.5,
+      presence_penalty: opts.presence_penalty ?? 0.6,
       // Instant messages are short. Capping hard also keeps the small models
       // from wandering off into an essay.
       max_tokens: opts.max_tokens ?? 120,
