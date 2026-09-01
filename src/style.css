@@ -1,0 +1,761 @@
+/* ==========================================================================
+   Anomie Instant Messenger — Windows 95 chrome, hand-rolled.
+
+   No UI library. Every bevel here is two nested 1px borders faked with inset
+   box-shadows, which is exactly how the real thing was drawn: a light outer
+   edge and a lighter inner edge on the top-left, a black outer edge and a gray
+   inner edge on the bottom-right. Get those four colors in the wrong order and
+   the whole illusion dies, which is most of why this looks the way it does.
+
+   Nothing here is rounded, nothing is shadowed, nothing eases.
+   ========================================================================== */
+
+:root {
+  --face: #c0c0c0;
+  --face-light: #dfdfdf;
+  --white: #ffffff;
+  --gray: #808080;
+  --black: #0a0a0a;
+  --true-black: #000000;
+  --title-a1: #000080;
+  --title-a2: #1084d0;
+  --title-i1: #808080;
+  --title-i2: #b5b5b5;
+  --desktop: #008080;
+  --select: #000080;
+  --disabled: #808080;
+
+  --font: 'MS Sans Serif', 'Microsoft Sans Serif', Tahoma, Geneva, Verdana,
+    sans-serif;
+}
+
+/* The four bevel recipes. Everything else is composition. */
+.bevel-out {
+  box-shadow: inset -1px -1px var(--black), inset 1px 1px var(--white),
+    inset -2px -2px var(--gray), inset 2px 2px var(--face-light);
+}
+.bevel-in {
+  box-shadow: inset -1px -1px var(--white), inset 1px 1px var(--black),
+    inset -2px -2px var(--face-light), inset 2px 2px var(--gray);
+}
+/* Sunken content well — lists, text areas. Darker than a pressed button. */
+.bevel-field {
+  box-shadow: inset -1px -1px var(--white), inset 1px 1px var(--gray),
+    inset -2px -2px var(--face-light), inset 2px 2px var(--black);
+}
+/* Single-line etched groove, for separators and status panels. */
+.bevel-groove {
+  box-shadow: inset -1px -1px var(--white), inset 1px 1px var(--gray);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+}
+
+body {
+  background: var(--desktop);
+  font-family: var(--font);
+  font-size: 11px;
+  color: var(--true-black);
+  /* The single most important line in this file. */
+  -webkit-font-smoothing: none;
+  -moz-osx-font-smoothing: grayscale;
+  font-smooth: never;
+  text-rendering: geometricPrecision;
+  cursor: default;
+  user-select: none;
+}
+
+img,
+svg {
+  image-rendering: pixelated;
+}
+
+/* --------------------------------------------------------------------------
+   Windows
+   -------------------------------------------------------------------------- */
+
+.window {
+  position: absolute;
+  background: var(--face);
+  border: 1px solid var(--true-black);
+  padding: 2px;
+  box-shadow: inset -1px -1px var(--gray), inset 1px 1px var(--face-light),
+    inset -2px -2px var(--face), inset 2px 2px var(--white);
+  display: flex;
+  flex-direction: column;
+  min-width: 160px;
+}
+
+.window.dragging {
+  /* No transitions anywhere, but especially not here. */
+  cursor: move;
+}
+
+.title-bar {
+  height: 18px;
+  flex: 0 0 18px;
+  background: linear-gradient(90deg, var(--title-a1), var(--title-a2));
+  display: flex;
+  align-items: center;
+  padding: 0 2px 0 3px;
+  cursor: move;
+}
+
+.window.inactive .title-bar {
+  background: linear-gradient(90deg, var(--title-i1), var(--title-i2));
+}
+
+.title-bar-text {
+  color: var(--white);
+  font-weight: bold;
+  font-size: 11px;
+  letter-spacing: 0;
+  flex: 1;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: clip;
+}
+
+.title-bar-icon {
+  width: 16px;
+  height: 16px;
+  margin-right: 3px;
+  flex: 0 0 16px;
+}
+
+.title-bar-controls {
+  display: flex;
+  gap: 0;
+}
+
+.title-btn {
+  width: 16px;
+  height: 14px;
+  background: var(--face);
+  border: none;
+  padding: 0;
+  margin-left: 2px;
+  position: relative;
+  box-shadow: inset -1px -1px var(--black), inset 1px 1px var(--white),
+    inset -2px -2px var(--gray), inset 2px 2px var(--face-light);
+  background-repeat: no-repeat;
+  background-position: center;
+}
+.title-btn:first-child {
+  margin-left: 0;
+}
+.title-btn:active {
+  box-shadow: inset -1px -1px var(--white), inset 1px 1px var(--black),
+    inset -2px -2px var(--face-light), inset 2px 2px var(--gray);
+  background-position: calc(50% + 1px) calc(50% + 1px);
+}
+.title-btn.close {
+  margin-left: 4px; /* the gap before Close, exactly as in 95 */
+}
+
+/* Glyphs drawn as SVG so they stay 1px-crisp at every zoom. */
+.title-btn.min {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='6' height='6'%3E%3Crect x='0' y='4' width='6' height='2' fill='%23000'/%3E%3C/svg%3E");
+}
+.title-btn.max {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='9' height='9'%3E%3Crect x='0' y='0' width='9' height='9' fill='none' stroke='%23000' stroke-width='1'/%3E%3Crect x='0' y='0' width='9' height='2' fill='%23000'/%3E%3C/svg%3E");
+}
+.title-btn.close {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='7'%3E%3Cpath d='M0 0h2l2 2 2-2h2L5 3.5 8 7H6L4 5 2 7H0l3-3.5z' fill='%23000'/%3E%3C/svg%3E");
+}
+
+.window-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  margin-top: 1px;
+}
+
+/* --------------------------------------------------------------------------
+   Menu bar
+   -------------------------------------------------------------------------- */
+
+.menu-bar {
+  display: flex;
+  flex: 0 0 auto;
+  padding: 1px 0 2px;
+}
+
+.menu-item {
+  padding: 1px 6px 2px;
+  color: var(--true-black);
+}
+
+.menu-item:hover,
+.menu-item.open {
+  background: var(--select);
+  color: var(--white);
+}
+
+.menu-item u {
+  text-decoration: underline;
+  text-underline-offset: 1px;
+}
+
+.menu-popup {
+  position: absolute;
+  z-index: 9000;
+  background: var(--face);
+  border: 1px solid var(--true-black);
+  padding: 2px;
+  min-width: 130px;
+  box-shadow: inset -1px -1px var(--gray), inset 1px 1px var(--face-light),
+    inset -2px -2px var(--face), inset 2px 2px var(--white);
+}
+
+.menu-popup .row {
+  padding: 3px 18px 3px 20px;
+  white-space: nowrap;
+}
+.menu-popup .row:hover:not(.disabled) {
+  background: var(--select);
+  color: var(--white);
+}
+.menu-popup .row.disabled {
+  color: var(--gray);
+  text-shadow: 1px 1px var(--white);
+}
+.menu-popup .sep {
+  height: 2px;
+  margin: 2px 1px;
+  box-shadow: inset 0 1px var(--gray), inset 0 -1px var(--white);
+}
+
+/* --------------------------------------------------------------------------
+   Buttons
+   -------------------------------------------------------------------------- */
+
+button {
+  font-family: var(--font);
+  font-size: 11px;
+  color: var(--true-black);
+  background: var(--face);
+  border: none;
+  padding: 3px 10px 4px;
+  min-width: 68px;
+  min-height: 21px;
+  position: relative;
+  box-shadow: inset -1px -1px var(--black), inset 1px 1px var(--white),
+    inset -2px -2px var(--gray), inset 2px 2px var(--face-light);
+  -webkit-font-smoothing: none;
+}
+
+button:active:not(:disabled) {
+  box-shadow: inset -1px -1px var(--white), inset 1px 1px var(--black),
+    inset -2px -2px var(--face-light), inset 2px 2px var(--gray);
+  padding: 4px 9px 3px 11px; /* the label shifts down-right when pressed */
+}
+
+button:focus-visible {
+  outline: 1px dotted var(--true-black);
+  outline-offset: -4px;
+}
+
+button:disabled {
+  color: var(--gray);
+  /* The etched-out look: a white drop shadow one pixel down-right. */
+  text-shadow: 1px 1px var(--white);
+}
+
+button.default {
+  box-shadow: inset -1px -1px var(--black), inset 1px 1px var(--white),
+    inset -2px -2px var(--gray), inset 2px 2px var(--face-light),
+    0 0 0 1px var(--true-black);
+  margin: 1px;
+}
+
+/* Small square toolbar buttons — B / I / U, smiley, color. */
+button.tool {
+  min-width: 22px;
+  min-height: 22px;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  line-height: 1;
+}
+button.tool:active {
+  padding: 1px 0 0 1px;
+}
+button.tool.on {
+  box-shadow: inset -1px -1px var(--white), inset 1px 1px var(--black),
+    inset -2px -2px var(--face-light), inset 2px 2px var(--gray);
+  background: repeating-conic-gradient(
+      var(--face) 0% 25%,
+      var(--white) 0% 50%
+    )
+    0 0 / 2px 2px;
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px;
+  flex: 0 0 auto;
+}
+
+.toolbar .sep {
+  width: 2px;
+  height: 20px;
+  margin: 0 3px;
+  box-shadow: inset 1px 0 var(--gray), inset -1px 0 var(--white);
+}
+
+/* --------------------------------------------------------------------------
+   Fields, selects, wells
+   -------------------------------------------------------------------------- */
+
+input[type='text'],
+input[type='password'] {
+  font-family: var(--font);
+  font-size: 11px;
+  background: var(--white);
+  border: none;
+  padding: 3px 4px 2px;
+  box-shadow: inset -1px -1px var(--white), inset 1px 1px var(--gray),
+    inset -2px -2px var(--face-light), inset 2px 2px var(--black);
+  -webkit-font-smoothing: none;
+  user-select: text;
+}
+input:focus {
+  outline: none;
+}
+
+select {
+  font-family: var(--font);
+  font-size: 11px;
+  background: var(--white);
+  border: none;
+  height: 20px;
+  padding: 2px 2px 2px 3px;
+  box-shadow: inset -1px -1px var(--white), inset 1px 1px var(--gray),
+    inset -2px -2px var(--face-light), inset 2px 2px var(--black);
+  -webkit-appearance: none;
+  appearance: none;
+  padding-right: 18px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='7' height='4'%3E%3Cpath d='M0 0h7L3.5 4z' fill='%23000'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 5px center;
+  -webkit-font-smoothing: none;
+}
+
+.well {
+  background: var(--white);
+  box-shadow: inset -1px -1px var(--white), inset 1px 1px var(--gray),
+    inset -2px -2px var(--face-light), inset 2px 2px var(--black);
+  overflow: auto;
+  min-height: 0;
+}
+
+/* --------------------------------------------------------------------------
+   Scrollbars — chunky arrows, dithered track. The ugly detail that sells it.
+   -------------------------------------------------------------------------- */
+
+::-webkit-scrollbar {
+  width: 16px;
+  height: 16px;
+}
+
+::-webkit-scrollbar-track {
+  background: repeating-conic-gradient(var(--face) 0% 25%, var(--white) 0% 50%)
+    0 0 / 2px 2px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--face);
+  box-shadow: inset -1px -1px var(--black), inset 1px 1px var(--white),
+    inset -2px -2px var(--gray), inset 2px 2px var(--face-light);
+}
+
+::-webkit-scrollbar-corner {
+  background: var(--face);
+}
+
+::-webkit-scrollbar-button {
+  background: var(--face);
+  box-shadow: inset -1px -1px var(--black), inset 1px 1px var(--white),
+    inset -2px -2px var(--gray), inset 2px 2px var(--face-light);
+  background-repeat: no-repeat;
+  background-position: center;
+  display: block;
+}
+::-webkit-scrollbar-button:vertical:decrement {
+  height: 16px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='7' height='4'%3E%3Cpath d='M3.5 0 7 4H0z' fill='%23000'/%3E%3C/svg%3E");
+}
+::-webkit-scrollbar-button:vertical:increment {
+  height: 16px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='7' height='4'%3E%3Cpath d='M0 0h7L3.5 4z' fill='%23000'/%3E%3C/svg%3E");
+}
+::-webkit-scrollbar-button:horizontal:decrement {
+  width: 16px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='7'%3E%3Cpath d='M4 0v7L0 3.5z' fill='%23000'/%3E%3C/svg%3E");
+}
+::-webkit-scrollbar-button:horizontal:increment {
+  width: 16px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='7'%3E%3Cpath d='M0 0v7l4-3.5z' fill='%23000'/%3E%3C/svg%3E");
+}
+/* Kill the phantom double-arrow buttons Chrome adds at the far ends. */
+::-webkit-scrollbar-button:vertical:start:increment,
+::-webkit-scrollbar-button:vertical:end:decrement,
+::-webkit-scrollbar-button:horizontal:start:increment,
+::-webkit-scrollbar-button:horizontal:end:decrement {
+  display: none;
+}
+
+/* --------------------------------------------------------------------------
+   Status bar
+   -------------------------------------------------------------------------- */
+
+.status-bar {
+  display: flex;
+  gap: 2px;
+  padding: 2px 0 0;
+  flex: 0 0 auto;
+}
+
+.status-panel {
+  flex: 1;
+  padding: 2px 4px 3px;
+  box-shadow: inset -1px -1px var(--white), inset 1px 1px var(--gray);
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.status-panel.fixed {
+  flex: 0 0 auto;
+  min-width: 78px;
+}
+
+/* --------------------------------------------------------------------------
+   Buddy list
+   -------------------------------------------------------------------------- */
+
+#buddy-window {
+  width: 208px;
+  height: 428px;
+}
+
+.bl-header {
+  flex: 0 0 auto;
+  padding: 3px 4px 4px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.bl-header .logo {
+  width: 28px;
+  height: 28px;
+  flex: 0 0 28px;
+}
+
+.bl-header .who {
+  font-weight: bold;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bl-header .sub {
+  color: var(--gray);
+  font-weight: normal;
+}
+
+.bl-tree {
+  flex: 1;
+  min-height: 0;
+  padding: 2px 0;
+}
+
+.group-row {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  padding: 1px 4px 2px 3px;
+  font-weight: bold;
+}
+.group-row:hover {
+  background: #e8e8e8;
+}
+
+.expander {
+  width: 9px;
+  height: 9px;
+  flex: 0 0 9px;
+  background: var(--white);
+  box-shadow: inset 0 0 0 1px var(--gray);
+  background-repeat: no-repeat;
+  background-position: center;
+  /* Minus box = expanded. */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='5' height='5'%3E%3Crect x='0' y='2' width='5' height='1' fill='%23000'/%3E%3C/svg%3E");
+}
+.group-row.collapsed .expander {
+  /* Plus box = collapsed. */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='5' height='5'%3E%3Crect x='0' y='2' width='5' height='1' fill='%23000'/%3E%3Crect x='2' y='0' width='1' height='5' fill='%23000'/%3E%3C/svg%3E");
+}
+
+.buddy-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 1px 4px 2px 18px;
+  white-space: nowrap;
+  overflow: hidden;
+}
+.buddy-row:hover {
+  background: #e8e8e8;
+}
+.buddy-row.selected {
+  background: var(--select);
+  color: var(--white);
+}
+.buddy-row.selected .away-note {
+  color: #b0b8e0;
+}
+.buddy-row.offline {
+  color: var(--gray);
+}
+.buddy-row.offline.selected {
+  color: #c8c8c8;
+}
+
+.buddy-row .name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.buddy-row.idle .name {
+  color: var(--gray);
+}
+.buddy-row.away .name {
+  font-style: italic;
+}
+
+.away-note {
+  color: var(--gray);
+  font-style: italic;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+  min-width: 0;
+}
+
+.buddy-icon {
+  width: 12px;
+  height: 12px;
+  flex: 0 0 12px;
+}
+
+/* Bottom tab strip, like the real client's Online / List / Chat row. */
+.bl-tabs {
+  display: flex;
+  gap: 2px;
+  padding: 3px 0 0;
+  flex: 0 0 auto;
+}
+.bl-tabs button {
+  flex: 1;
+  min-width: 0;
+  padding: 3px 2px 4px;
+}
+
+/* --------------------------------------------------------------------------
+   IM window
+   -------------------------------------------------------------------------- */
+
+.im-window {
+  width: 428px;
+  height: 372px;
+}
+
+.im-history {
+  flex: 1 1 auto;
+  min-height: 60px;
+  padding: 3px 4px;
+  font-size: 12px;
+  line-height: 1.32;
+  user-select: text;
+  cursor: auto;
+  word-wrap: break-word;
+}
+
+.im-history .line {
+  margin: 0 0 2px;
+}
+
+.im-history .sn {
+  font-weight: bold;
+}
+.im-history .sn.me {
+  color: #b00000;
+}
+.im-history .sn.them {
+  color: #0000c0;
+}
+
+.im-history .sys {
+  color: var(--gray);
+  font-style: italic;
+}
+
+.im-split {
+  flex: 0 0 4px;
+  cursor: ns-resize;
+}
+
+.im-compose {
+  flex: 0 0 74px;
+  padding: 3px 4px;
+  font-size: 12px;
+  line-height: 1.32;
+  outline: none;
+  overflow-y: auto;
+  user-select: text;
+  cursor: auto;
+  word-wrap: break-word;
+}
+
+.im-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 0 2px;
+  flex: 0 0 auto;
+}
+.im-actions .spacer {
+  flex: 1;
+}
+.im-actions button {
+  min-width: 58px;
+}
+.im-actions button.send {
+  min-width: 72px;
+}
+
+/* The typing indicator in the status bar — a period detail people forget. */
+.typing {
+  font-style: italic;
+}
+
+/* --------------------------------------------------------------------------
+   Sign-on window
+   -------------------------------------------------------------------------- */
+
+#signon-window {
+  width: 340px;
+}
+
+.signon-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px 6px;
+}
+.signon-banner .logo {
+  width: 56px;
+  height: 56px;
+  flex: 0 0 56px;
+}
+.signon-banner h1 {
+  font-size: 15px;
+  margin: 0 0 3px;
+  font-weight: bold;
+}
+.signon-banner p {
+  margin: 0;
+  color: #404040;
+  line-height: 1.45;
+}
+
+.field-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 12px;
+}
+.field-row label {
+  width: 78px;
+  flex: 0 0 78px;
+  text-align: right;
+}
+.field-row input {
+  flex: 1;
+}
+
+.signon-note {
+  margin: 4px 12px 0;
+  padding: 6px 8px;
+  color: #404040;
+  line-height: 1.5;
+  box-shadow: inset -1px -1px var(--white), inset 1px 1px var(--gray);
+}
+
+.signon-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+  padding: 10px 12px 10px;
+}
+
+.warn {
+  color: #a00000;
+}
+
+/* --------------------------------------------------------------------------
+   Smiley palette
+   -------------------------------------------------------------------------- */
+
+.smiley-popup {
+  position: absolute;
+  z-index: 9000;
+  background: var(--face);
+  border: 1px solid var(--true-black);
+  padding: 3px;
+  display: grid;
+  grid-template-columns: repeat(6, 24px);
+  gap: 2px;
+  box-shadow: inset -1px -1px var(--gray), inset 1px 1px var(--face-light),
+    inset -2px -2px var(--face), inset 2px 2px var(--white);
+}
+.smiley-popup button {
+  min-width: 24px;
+  width: 24px;
+  height: 24px;
+  min-height: 24px;
+  padding: 0;
+  font-size: 11px;
+}
+
+/* --------------------------------------------------------------------------
+   Colophon — the wall label, bottom-right of the desktop.
+   -------------------------------------------------------------------------- */
+
+#colophon {
+  position: absolute;
+  right: 8px;
+  bottom: 6px;
+  color: #bfe0e0;
+  font-size: 10px;
+  text-align: right;
+  line-height: 1.5;
+  pointer-events: none;
+  text-shadow: 1px 1px var(--true-black);
+}
