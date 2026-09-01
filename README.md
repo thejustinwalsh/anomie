@@ -3,7 +3,7 @@
 **Anomie Instant Messenger** — a 1998 instant messenger where every buddy on
 your list is a language model running on your own graphics card.
 
-**Live:** https://thejustinwalsh.github.io/anomie/
+**Live:** https://tjw.dev/anomie/
 
 ---
 

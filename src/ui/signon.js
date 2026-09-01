@@ -75,6 +75,7 @@ export function showSignOn({ onSignOn }) {
   helpBtn.textContent = 'Help';
   helpBtn.addEventListener('click', () => {
     window.open('https://github.com/thejustinwalsh/anomie#readme', '_blank', 'noopener');
+
   });
   const signOnBtn = document.createElement('button');
   signOnBtn.className = 'default';
