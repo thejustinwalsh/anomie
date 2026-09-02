@@ -880,16 +880,27 @@ select {
 
   /* A dialog's close button, nudged just far enough to be tappable while still
      fitting inside an authentic 18px caption. */
-  .window.dialog .title-bar {
-    height: 20px;
-    flex-basis: 20px;
-  }
+  /* A dialog keeps the authentic 18px caption, so its close button stays at
+     the period 16x14 with the same fixed-size SVG glyph as the desktop. The
+     tap target is grown with a transparent ::after rather than by inflating
+     the box — that way the thumb gets something to hit and the chrome still
+     measures what it should. Growing the button itself was the original bug:
+     it reads as oversized next to every other caption button in the app. */
   .window.dialog .title-btn {
-    width: 22px;
-    height: 18px;
-    min-width: 22px;
-    min-height: 18px;
-    flex-basis: 22px;
+    width: 16px;
+    height: 14px;
+    min-width: 16px;
+    min-height: 14px;
+    flex-basis: 16px;
+  }
+  .window.dialog .title-btn::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 40px;
+    height: 34px;
+    transform: translate(-50%, -50%);
   }
 
   /* viewport-fit=cover puts the teal under the notch and the home indicator, so
