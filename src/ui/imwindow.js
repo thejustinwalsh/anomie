@@ -106,6 +106,72 @@ function escapeHTML(s) {
 }
 
 /**
+ * Character ranges given as codepoint pairs and compiled at runtime, rather
+ * than pasted into a regex literal. Written literally, half of these are
+ * invisible in an editor and the C0 range makes the source file itself stop
+ * being text; written as escapes, they are unreadable. As numbers they can be
+ * read, grepped and commented.
+ */
+function charClass(ranges) {
+  const body = ranges
+    .map(([lo, hi]) =>
+      lo === hi
+        ? String.fromCharCode(lo)
+        : String.fromCharCode(lo) + '-' + String.fromCharCode(hi)
+    )
+    .join('');
+  return new RegExp('[' + body + ']', 'g');
+}
+
+/** Invisible in the compose box, but real to a tokenizer. */
+const INVISIBLE = charClass([
+  [0x0000, 0x0008], // C0 controls, keeping tab (09) and newline (0a)
+  [0x000b, 0x001f], // the rest of C0, keeping nothing else
+  [0x007f, 0x009f], // DEL and the C1 block
+  [0x200b, 0x200f], // zero-width space through right-to-left mark
+  [0x202a, 0x202e], // bidi embeddings and overrides
+  [0x2060, 0x206f], // word joiner through the invisible operators
+  [0xfeff, 0xfeff], // BOM, a.k.a. zero-width no-break space
+]);
+
+/** Spaces that a paste drags in, which a 1998 chat window would just call a space. */
+const ODD_SPACE = charClass([
+  [0x00a0, 0x00a0], // non-breaking space
+  [0x1680, 0x1680], // ogham space mark
+  [0x2000, 0x200a], // en quad through hair space
+  [0x202f, 0x202f], // narrow no-break space
+  [0x205f, 0x205f], // medium mathematical space
+  [0x3000, 0x3000], // ideographic space
+]);
+
+/**
+ * Whatever came out of the contenteditable, made fit to send.
+ *
+ * A contenteditable accepts anything the platform will put in it. None of that
+ * should reach the model: partly hygiene, since the smallest buddy has a 1k
+ * context and an invisible character still costs a token, and partly that the
+ * transcript is fed back in as prompt on every turn — so text hiding inside a
+ * message gets a second chance to be read as instruction.
+ */
+export function sanitizeOutgoing(raw) {
+  let t = String(raw ?? '');
+
+  t = t.replace(INVISIBLE, '');
+  t = t.replace(ODD_SPACE, ' ');
+
+  // Shift+Enter is allowed while composing, but an instant message went over
+  // the wire as one line and that is still the right shape for it.
+  t = t.replace(/\r\n?/g, '\n').replace(/\s*\n\s*/g, ' ');
+
+  t = t.replace(/[ \t]{2,}/g, ' ').trim();
+
+  // Nobody typed a novel into an IM box.
+  if (t.length > 400) t = t.slice(0, 400).trimEnd();
+
+  return t;
+}
+
+/**
  * @param {object} buddy   entry from BUDDIES
  * @param {object} deps    { onStateChange(screenName, state) } — lets the buddy
  *                         list show download progress as an away message
@@ -307,6 +373,35 @@ export function openIM(buddy, deps = {}) {
   compose.className = 'well im-compose';
   compose.contentEditable = 'true';
   compose.spellcheck = false;
+  compose.setAttribute('role', 'textbox');
+  compose.setAttribute('aria-multiline', 'true');
+  compose.setAttribute('aria-label', `Message to ${buddy.screenName}`);
+  compose.dataset.placeholder = `Send an Instant Message to ${buddy.screenName}`;
+
+  // A contenteditable is never really empty once you have typed and deleted:
+  // the browser leaves a <br> behind, `:empty` stops matching, and the
+  // placeholder never comes back. Clear it outright the moment it holds only
+  // whitespace — safe to discard innerHTML here precisely because there is
+  // nothing in it worth keeping.
+  const normalizeEmpty = () => {
+    if (!compose.textContent.trim()) compose.innerHTML = '';
+  };
+  compose.addEventListener('input', normalizeEmpty);
+  compose.addEventListener('blur', normalizeEmpty);
+
+  // Paste and drop hand over full HTML by default, which would drag a
+  // stylesheet and a font stack into a 1998 chat window. Take the text only.
+  const insertPlain = (e, data) => {
+    e.preventDefault();
+    const text = sanitizeOutgoing(data);
+    if (text) document.execCommand('insertText', false, text);
+  };
+  compose.addEventListener('paste', (e) =>
+    insertPlain(e, (e.clipboardData || window.clipboardData)?.getData('text/plain') || '')
+  );
+  compose.addEventListener('drop', (e) =>
+    insertPlain(e, e.dataTransfer?.getData('text/plain') || '')
+  );
 
   win.body.append(history, splitter, compose);
 
@@ -459,7 +554,7 @@ export function openIM(buddy, deps = {}) {
 
   async function send() {
     if (busy) return;
-    const text = compose.innerText.replace(/\s+$/, '').trim();
+    const text = sanitizeOutgoing(compose.innerText);
     if (!text) return;
 
     const style = { ...fmt };

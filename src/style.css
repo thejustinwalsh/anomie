@@ -655,7 +655,21 @@ select {
   overflow-y: auto;
   user-select: text;
   cursor: auto;
-  word-wrap: break-word;
+  /* Shift+Enter puts a real newline in the box; without pre-wrap the browser
+     collapses runs of spaces and the caret lands in the wrong place. */
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+
+/* The placeholder. `:empty` only ever matches because normalizeEmpty() in
+   imwindow.js clears the stray <br> the browser leaves behind on delete. */
+.im-compose:empty::before {
+  content: attr(data-placeholder);
+  color: var(--gray);
+  pointer-events: none;
+  /* Not selectable, not copyable, and invisible to innerText. */
+  user-select: none;
 }
 
 .im-actions {
