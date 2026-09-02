@@ -1032,6 +1032,10 @@ select {
      transcript is the part worth reading. Tighten the compose box on a short
      viewport so the history keeps its height; two lines is all anyone types
      into an IM anyway. */
+  /* Two routes to the same rules. The media query covers a genuinely short
+     window; .short-viewport is set from visualViewport by main.js and is the
+     one that fires for the iOS keyboard, where the layout viewport — and so
+     every media query — stays at its full height. */
   @media (max-height: 620px) {
     .im-compose {
       flex-basis: 54px;
@@ -1040,6 +1044,13 @@ select {
     .im-history {
       font-size: 14px;
     }
+  }
+  html.short-viewport .im-compose {
+    flex-basis: 54px;
+    max-height: 84px;
+  }
+  html.short-viewport .im-history {
+    font-size: 14px;
   }
   .im-actions button {
     min-width: 0;

@@ -102,6 +102,12 @@ function trackViewport() {
       // its title bar off screen. offsetTop is exactly that displacement.
       root.setProperty('--shell-top', `${Math.round(vv.offsetTop)}px`);
 
+      // A media query cannot see this. On iOS the layout viewport keeps its
+      // full height when the keyboard opens, so @media (max-height) never
+      // fires — the visual viewport is the only thing that shrinks, and only
+      // JS can read it. Hence a class rather than a breakpoint.
+      document.documentElement.classList.toggle('short-viewport', vv.height < 620);
+
       // Opening the keyboard should not hide what you were reading.
       document.querySelectorAll('.im-history').forEach((h) => {
         h.scrollTop = h.scrollHeight;
