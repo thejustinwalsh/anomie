@@ -88,14 +88,33 @@ function colophon() {
 function trackViewport() {
   const vv = window.visualViewport;
   if (!vv) return;
+
+  let raf = 0;
   const apply = () => {
-    document.documentElement.style.setProperty('--shell-h', `${Math.round(vv.height)}px`);
+    // The keyboard fires resize and scroll in a burst; coalesce to one write.
+    cancelAnimationFrame(raf);
+    raf = requestAnimationFrame(() => {
+      const root = document.documentElement.style;
+      root.setProperty('--shell-h', `${Math.round(vv.height)}px`);
+      // Height alone is not enough. iOS ignores interactive-widget, so the
+      // layout viewport keeps its full height and the visual viewport scrolls
+      // down instead — a fixed shell then sits above the visible region with
+      // its title bar off screen. offsetTop is exactly that displacement.
+      root.setProperty('--shell-top', `${Math.round(vv.offsetTop)}px`);
+
+      // Opening the keyboard should not hide what you were reading.
+      document.querySelectorAll('.im-history').forEach((h) => {
+        h.scrollTop = h.scrollHeight;
+      });
+    });
   };
+
   apply();
   vv.addEventListener('resize', apply);
-  // Scrolling the visual viewport (which is what the keyboard actually does on
-  // iOS) changes what is visible without firing resize.
+  // Scrolling the visual viewport is what the keyboard actually does on iOS,
+  // and it does not fire resize.
   vv.addEventListener('scroll', apply);
+  window.addEventListener('orientationchange', apply);
 }
 
 function boot() {

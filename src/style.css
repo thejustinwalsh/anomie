@@ -64,6 +64,17 @@ body {
   margin: 0;
   overflow: hidden;
   overscroll-behavior: none;
+  /* iOS inflates small text inside block containers on its own ("text
+     autosizing"). Every size in this file is deliberate and most of it is 11px,
+     which is exactly what that heuristic targets — so it silently widens the
+     toolbar and the status bar on a phone and on nothing else. This is why the
+     overflow never reproduced in desktop responsive mode. */
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  /* One overflowing child otherwise makes iOS widen the whole layout viewport,
+     turning a local bug into "the entire app is too wide". */
+  max-width: 100%;
+  overflow-x: hidden;
 }
 
 body {
@@ -342,6 +353,17 @@ button.tool.on {
   gap: 2px;
   padding: 2px;
   flex: 0 0 auto;
+  /* Never the thing that makes the window too wide. */
+  min-width: 0;
+  max-width: 100%;
+}
+
+/* The two selects carry fixed pixel widths for the desktop look. On a narrow
+   screen they have to be allowed to give, or their combined 152px plus five
+   34px buttons decides the window's width. */
+.toolbar select {
+  flex: 0 1 auto;
+  min-width: 0;
 }
 
 .toolbar .sep {
@@ -473,8 +495,13 @@ select {
   text-overflow: ellipsis;
 }
 .status-panel.fixed {
-  flex: 0 0 auto;
-  min-width: 78px;
+  /* Shrinkable, not fixed. `flex: 0 0 auto` sized this to its content, and the
+     content is a model id like Llama-3.2-1B-Instruct-q4f16_1 — so it set a hard
+     floor under the status bar and the ellipsis never had a chance to apply.
+     min-width:0 is what actually lets a flex item shrink below its content. */
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 45%;
 }
 
 /* --------------------------------------------------------------------------
@@ -835,7 +862,12 @@ select {
   .window:not(.dialog) {
     position: fixed !important;
     left: 0 !important;
-    top: 0 !important;
+    /* iOS does not support interactive-widget, so the keyboard leaves the
+       layout viewport alone and scrolls the visual one instead. A fixed element
+       is positioned against the layout viewport, so it stays put while the
+       visible region moves down — which is the title bar walking off the top.
+       --shell-top is visualViewport.offsetTop and puts it back. */
+    top: var(--shell-top, 0px) !important;
     width: 100% !important;
     height: 100% !important;
     height: 100dvh !important;
@@ -994,6 +1026,20 @@ select {
   }
   .im-split {
     flex-basis: 8px;
+  }
+
+  /* With the keyboard up there is roughly 490px of viewport left, and the
+     transcript is the part worth reading. Tighten the compose box on a short
+     viewport so the history keeps its height; two lines is all anyone types
+     into an IM anyway. */
+  @media (max-height: 620px) {
+    .im-compose {
+      flex-basis: 54px;
+      max-height: 84px;
+    }
+    .im-history {
+      font-size: 14px;
+    }
   }
   .im-actions button {
     min-width: 0;
