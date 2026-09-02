@@ -11,6 +11,14 @@ your list is a language model running on your own graphics card.
 
 ## Artist statement
 
+This started as a message to a friend:
+
+> Like we invented memmap and paging in 1969 and now we basically use AIM with
+> Markov chain bots to write software.
+
+Everything here is an attempt to deserve that sentence. (Markov chain is the
+wrong word for a language model. It is the right word for the feeling.)
+
 We spent the nineties typing into the void at strangers instead of talking to
 the people in the next room. That was the complaint, anyway — that the buddy
 list was a substitute for a neighborhood, that the screen name was a substitute
