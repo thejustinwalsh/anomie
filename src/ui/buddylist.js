@@ -6,7 +6,7 @@
  * tab strip. Double-click a name to open an IM.
  *
  * The Family group is the piece's argument in one control: three real people,
- * permanently offline, one floor away.
+ * permanently offline, twenty minutes away.
  */
 import { createWindow, createMenuBar, isCompactLayout } from './window.js';
 import { BUDDIES, FAMILY } from '../buddies.js';

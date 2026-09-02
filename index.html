@@ -2,12 +2,19 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!-- viewport-fit=cover so the teal desktop runs under the notch and the home
+         indicator. interactive-widget=resizes-content makes the keyboard shrink
+         the layout viewport instead of sliding it, which is what keeps the Send
+         button on screen while you are typing. -->
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content"
+    />
     <title>Anomie Instant Messenger</title>
 
     <meta
       name="description"
-      content="A 1998 instant messenger where every buddy on your list is a language model running on your own machine. The Family group is never online."
+      content="We spent the 90s talking to strangers instead of our neighbors. Now we talk to language models instead of either. The Family group is never online."
     />
     <meta name="color-scheme" content="light" />
     <meta name="author" content="Justin Walsh" />
@@ -18,7 +25,7 @@
     <meta property="og:title" content="Anomie Instant Messenger" />
     <meta
       property="og:description"
-      content="We spent the 90s typing to strangers instead of talking to our neighbors. Now the thing on the other end isn't even a person — and it's better at being a buddy than anyone. Every name on this buddy list is a language model running on your own machine. The Family group is never online."
+      content="We spent the 90s talking to strangers instead of our neighbors. Now we talk to language models instead of either. The Family group is never online."
     />
     <meta property="og:url" content="https://tjw.dev/anomie/" />
     <meta property="og:image" content="https://tjw.dev/anomie/og.png" />
@@ -31,9 +38,11 @@
 
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="Anomie Instant Messenger" />
+    <!-- Twitter truncates harder than Facebook; the last sentence is the one
+         that can go, because the turn is in "instead of either". -->
     <meta
       name="twitter:description"
-      content="A 1998 instant messenger where every buddy is a language model running on your machine. The Family group is never online."
+      content="We spent the 90s talking to strangers instead of our neighbors. Now we talk to language models instead of either."
     />
     <meta name="twitter:image" content="https://tjw.dev/anomie/og.png" />
   </head>

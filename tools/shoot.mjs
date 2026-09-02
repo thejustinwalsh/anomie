@@ -28,13 +28,13 @@ const SEED = {
   history: {
     SunshineGrrl82: [
       { from: 'me', text: 'hey', at: 1 },
-      { from: 'them', text: "hey yay u r so cute!!! that's my fave smile ever!!", at: 2 },
+      { from: 'them', text: 'HI!!! omg hi!! :-) u have the BEST screen name i swear', at: 2 },
       { from: 'me', text: 'cant sleep', at: 3 },
-      { from: 'them', text: 'wut u mean u cant sleep?? i cant sleep either lol wanna hang out??', at: 4 },
-      { from: 'me', text: 'is anyone else in your house awake', at: 5 },
+      { from: 'them', text: 'wut u mean u cant sleep?? i cant sleep either lol wanna stay up??', at: 4 },
+      { from: 'me', text: 'do you ever talk to anyone who isnt online', at: 5 },
       {
         from: 'them',
-        text: "yes!! ur brother is literally playing a million vid-cams on his comp and i'm DYING of boredom!!",
+        text: "omg what a QUESTION!! ur so deep!! :-) anyway everyone at work is boring and ur not!!",
         at: 6,
       },
     ],

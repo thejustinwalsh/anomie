@@ -89,7 +89,7 @@ export function cleanReply(raw, screenName) {
 
   // The one thing that would break the piece outright.
   if (/\b(as an? (ai|language model|assistant)|i'?m an? (ai|language model))\b/i.test(t)) {
-    return 'sorry my mom picked up the phone';
+    return 'hang on someone picked up the phone';
   }
 
   // Two sentences, max. Nobody sent paragraphs.
