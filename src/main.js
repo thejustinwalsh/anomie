@@ -1,6 +1,6 @@
 import './style.css';
 import { showSignOn } from './ui/signon.js';
-import { createBuddyList } from './ui/buddylist.js';
+import { createBuddyList, dialog } from './ui/buddylist.js';
 import { closeAllIMs } from './ui/imwindow.js';
 import { applyFavicon, runningManSVG } from './logo.js';
 import { mountBackdrop } from './backdrop.js';
@@ -32,10 +32,25 @@ function tickDecay() {
 function signOn(name) {
   store.setScreenName(name);
   sounds.play('dooropen');
-  buddyList = createBuddyList({ onSignOff: signOff });
+  buddyList = createBuddyList({ onSignOff: signOff, onFatal: outOfMemory });
   tickDecay();
   clearInterval(decayTimer);
   decayTimer = setInterval(tickDecay, 15_000);
+}
+
+/**
+ * The GPU ran out of memory. llm.js has already torn the engine down, so there
+ * is nothing to keep the session alive for: slam the door, go back to sign-on,
+ * and say what happened over the top of it.
+ */
+function outOfMemory(buddy) {
+  signOff();
+  dialog(
+    'Anomie Instant Messenger',
+    `You have been disconnected.\n\nThis computer ran out of graphics memory ` +
+      `while talking to ${buddy.screenName}. Signing on again and starting with ` +
+      `a smaller buddy usually works — Sk8rRatt187 is the smallest.`
+  );
 }
 
 function signOff() {
@@ -95,7 +110,7 @@ function boot() {
   const existing = store.getScreenName();
   if (existing) {
     // Returning to a session already in progress — the decay carries over.
-    buddyList = createBuddyList({ onSignOff: signOff });
+    buddyList = createBuddyList({ onSignOff: signOff, onFatal: outOfMemory });
     tickDecay();
     decayTimer = setInterval(tickDecay, 15_000);
   } else {

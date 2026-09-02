@@ -939,6 +939,23 @@ select {
     padding: 7px 6px 7px 20px;
     font-size: 13px;
   }
+
+  /* The confirm half of tap-to-select. Sits directly under the selected row,
+     indented to read as belonging to it, and never appears on a desktop —
+     buddylist.js only builds it below the breakpoint. */
+  .buddy-actions {
+    display: flex;
+    gap: 4px;
+    padding: 5px 6px 7px 20px;
+    background: #e8e8e8;
+    box-shadow: inset 0 1px var(--gray);
+  }
+  .buddy-actions button {
+    flex: 1;
+    min-width: 0;
+    padding: 6px 4px;
+    font-size: 12px;
+  }
   .group-row {
     padding: 6px 6px 7px 5px;
     font-size: 13px;

@@ -23,7 +23,7 @@ const BL_ICON = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" wid
 const buddyIcon = (color) =>
   `<span class="buddy-icon">${runningManSVG({ decay: 0, color, compact: true })}</span>`;
 
-export function createBuddyList({ onSignOff }) {
+export function createBuddyList({ onSignOff, onFatal }) {
   const me = store.getScreenName();
 
   /** Live per-buddy UI state, keyed by screen name. */
@@ -124,15 +124,50 @@ export function createBuddyList({ onSignOff }) {
     tree.innerHTML = '';
 
     group('Buddies', `${online.length}/${BUDDIES.length}`, () =>
-      online.map((b) => buddyRow(b))
+      online.flatMap((b) => buddyRow(b))
     );
 
     group('Family', `0/${FAMILY.length}`, () => []);
 
     group('Offline', String(offlineBuddies.length + FAMILY.length), () => [
-      ...offlineBuddies.map((b) => buddyRow(b, true)),
-      ...FAMILY.map((f) => familyRow(f)),
+      ...offlineBuddies.flatMap((b) => buddyRow(b, true)),
+      ...FAMILY.flatMap((f) => familyRow(f)),
     ]);
+  }
+
+  /**
+   * The touch affordance for a selected row.
+   *
+   * A buddy is not a link — opening one commits to a several-hundred-megabyte
+   * download and a model swap. On a desktop the double-click is the confirming
+   * gesture, exactly as it was in AIM. A touchscreen has no double-click, so
+   * the second half of the gesture becomes this: tap to select, then say what
+   * you actually meant.
+   */
+  function actionRow(buttons) {
+    const row = document.createElement('div');
+    row.className = 'buddy-actions';
+    buttons.forEach(([label, fn, cls]) => {
+      const b = document.createElement('button');
+      b.textContent = label;
+      if (cls) b.className = cls;
+      b.addEventListener('click', (e) => {
+        e.stopPropagation();
+        fn();
+      });
+      row.appendChild(b);
+    });
+    return row;
+  }
+
+  function blockBuddy(screenName) {
+    const st = state.get(screenName);
+    if (!st) return;
+    st.blocked = true;
+    st.online = false;
+    sounds.play('doorslam');
+    selected = null;
+    render();
   }
 
   function group(name, count, childrenFn) {
@@ -178,11 +213,18 @@ export function createBuddyList({ onSignOff }) {
     row.addEventListener('click', () => {
       selected = buddy.screenName;
       render();
-      // There is no double-click on a touchscreen; one tap opens.
-      if (isCompactLayout()) activate();
     });
     row.addEventListener('dblclick', activate);
-    return row;
+
+    if (!isCompactLayout() || selected !== buddy.screenName) return [row];
+    return [
+      row,
+      actionRow([
+        ['Send IM', activate, 'default'],
+        ['Info', () => infoFor(buddy)],
+        ['Block', () => blockBuddy(buddy.screenName)],
+      ]),
+    ];
   }
 
   function familyRow(person) {
@@ -201,10 +243,18 @@ export function createBuddyList({ onSignOff }) {
     row.addEventListener('click', () => {
       selected = person.screenName;
       render();
-      if (isCompactLayout()) activate();
     });
     row.addEventListener('dblclick', activate);
-    return row;
+
+    if (!isCompactLayout() || selected !== person.screenName) return [row];
+    // No Block. You cannot block your family, which is the joke.
+    return [
+      row,
+      actionRow([
+        ['Send IM', activate, 'default'],
+        ['Info', activate],
+      ]),
+    ];
   }
 
   function openBuddy(buddy) {
@@ -224,6 +274,7 @@ export function createBuddyList({ onSignOff }) {
         }
         render();
       },
+      onFatal: (b, err) => onFatal?.(b, err),
     });
   }
 
@@ -233,13 +284,17 @@ export function createBuddyList({ onSignOff }) {
     else sounds.play('error');
   }
 
+  function infoFor(buddy) {
+    dialog(
+      `${buddy.screenName} — Buddy Info`,
+      `${buddy.profile}\n\nRunning: ${buddy.model}\nApproximate download: ${buddy.vram} MB`
+    );
+  }
+
   function infoSelected() {
     const b = BUDDIES.find((x) => x.screenName === selected);
     if (!b) return sounds.play('error');
-    dialog(
-      `${b.screenName} — Buddy Info`,
-      `${b.profile}\n\nRunning: ${b.model}\nApproximate download: ${b.vram} MB`
-    );
+    infoFor(b);
   }
 
   // --- bottom tabs --------------------------------------------------------
@@ -267,6 +322,12 @@ export function createBuddyList({ onSignOff }) {
   win.body.appendChild(status);
 
   render();
+
+  // Crossing the breakpoint changes whether the action row exists at all, so
+  // rotating a phone has to rebuild the tree or the row is left stranded.
+  window
+    .matchMedia('(max-width: 767px)')
+    .addEventListener('change', () => render());
 
   // Ask the Cache API which buddies are already downloaded, so the list can say
   // so before you commit to a several-hundred-megabyte conversation.

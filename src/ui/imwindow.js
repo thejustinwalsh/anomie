@@ -618,6 +618,18 @@ export function openIM(buddy, deps = {}) {
       console.error(err);
       stopProgress();
       deps.onStateChange?.(buddy.screenName, { away: null });
+
+      // Out of memory is not a connection problem and cannot be retried — the
+      // GPU has already been released by the time this throws. Hand it upward
+      // and let the session end; anything else leaves a window that can only
+      // fail again.
+      if (err instanceof llm.OutOfMemoryError) {
+        addLine('sys', `${buddy.screenName} has signed off.`);
+        setStatus('Out of memory.');
+        deps.onFatal?.(buddy, err);
+        return;
+      }
+
       addLine('sys', `Could not reach ${buddy.screenName}. (${err?.message || err})`);
       sounds.play('error');
       setStatus('Connection problem.');

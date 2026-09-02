@@ -4,7 +4,7 @@
  */
 import { createWindow } from './window.js';
 import { runningManSVG } from '../logo.js';
-import { hasWebGPU } from '../llm.js';
+import { hasWebGPU, probeWebGPU } from '../llm.js';
 
 const SUGGESTIONS = [
   'CtrlAltDefeat',
@@ -60,14 +60,31 @@ export function showSignOn({ onSignOn }) {
   const note = document.createElement('div');
   note.className = 'signon-note';
 
-  const gpu = hasWebGPU();
-  note.innerHTML = gpu
-    ? 'There is no account and no password. Nothing you type is sent anywhere.<br><br>' +
-      'The first message to each buddy downloads their model from Hugging Face ' +
-      '(376&nbsp;MB&ndash;1.8&nbsp;GB) and caches it in this browser.'
-    : '<span class="warn"><b>WebGPU is not available in this browser.</b></span><br><br>' +
-      'The buddies cannot run without it. Try Chrome or Edge 113+, or Safari 18+. ' +
-      'You can still sign on and look around.';
+  const OK_NOTE =
+    'There is no account and no password. Nothing you type is sent anywhere.<br><br>' +
+    'The first message to each buddy downloads their model from Hugging Face ' +
+    '(376&nbsp;MB&ndash;1.8&nbsp;GB) and caches it in this browser.';
+
+  const NO_GPU_NOTE =
+    '<span class="warn"><b>WebGPU is not available in this browser.</b></span><br><br>' +
+    'The buddies cannot run without it. Try Chrome or Edge 113+, or Safari 18+. ' +
+    'You can still sign on and look around.';
+
+  const LIMITED_NOTE =
+    '<span class="warn"><b>This device cannot hold a buddy.</b></span><br><br>' +
+    'WebGPU is here, but its buffer limits are below what the smallest model ' +
+    'needs. This is usually a phone. You can still sign on and look around.';
+
+  // Start on the cheap synchronous answer so the window paints immediately, then
+  // correct it once the real probe comes back. `hasWebGPU()` only tells us
+  // whether it is worth asking; an adapter can still be missing or too small.
+  note.innerHTML = hasWebGPU() ? OK_NOTE : NO_GPU_NOTE;
+  probeWebGPU().then(({ tier }) => {
+    // The window may already be gone if someone signed on during the probe.
+    if (!note.isConnected) return;
+    note.innerHTML =
+      tier === 'ok' ? OK_NOTE : tier === 'limited' ? LIMITED_NOTE : NO_GPU_NOTE;
+  });
 
   const actions = document.createElement('div');
   actions.className = 'signon-actions';
