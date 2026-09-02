@@ -52,11 +52,18 @@
   box-sizing: border-box;
 }
 
+/* The shell is fixed and never scrolls; only the wells inside it do. Without
+   overscroll-behavior a drag past the end of the transcript rubber-bands the
+   whole page on iOS and the title bar walks off the top of the screen.
+   --shell-h is written by the visualViewport listener in main.js; 100dvh is the
+   fallback for browsers that do not report one. */
 html,
 body {
   height: 100%;
+  height: var(--shell-h, 100dvh);
   margin: 0;
   overflow: hidden;
+  overscroll-behavior: none;
 }
 
 body {
@@ -613,7 +620,10 @@ select {
 
 .im-history {
   flex: 1 1 auto;
-  min-height: 60px;
+  /* Zero, not 60px. A flex item's default min-height:auto refuses to shrink
+     below its content, which is exactly how a transcript pushes the compose box
+     and the Send button off the bottom of a phone once the keyboard opens. */
+  min-height: 0;
   padding: 3px 4px;
   font-size: 12px;
   line-height: 1.32;
@@ -647,7 +657,10 @@ select {
 }
 
 .im-compose {
-  flex: 0 0 74px;
+  /* Shrinkable. It keeps its 74px basis while there is room and gives height
+     back when there is not, so the actions row below it always stays on screen. */
+  flex: 0 1 74px;
+  min-height: 34px;
   padding: 3px 4px;
   font-size: 12px;
   line-height: 1.32;
@@ -826,6 +839,8 @@ select {
     width: 100% !important;
     height: 100% !important;
     height: 100dvh !important;
+    /* The measured height wins where it exists; dvh is the fallback. */
+    height: var(--shell-h, 100dvh) !important;
     min-width: 0;
     border: none;
     padding: 0;
@@ -850,7 +865,12 @@ select {
     display: none;
   }
 
-  .title-btn {
+  /* Full-bleed views get a 30px title bar, so their caption buttons can grow
+     into a real tap target. Dialogs keep the 18px bar, and must NOT — a 24px
+     button in an 18px bar overflows the caption and the X ends up looking
+     enormous and off-centre. That was the bug in Buddy Info. The glyphs
+     themselves are fixed-size SVG and never scale; only the box changes. */
+  .window:not(.dialog) .title-btn {
     width: 26px;
     height: 24px;
     min-width: 26px;
@@ -858,16 +878,39 @@ select {
     flex-basis: 26px;
   }
 
-  .window:not(.dialog) .window-body {
-    padding: 0 3px 3px;
+  /* A dialog's close button, nudged just far enough to be tappable while still
+     fitting inside an authentic 18px caption. */
+  .window.dialog .title-bar {
+    height: 20px;
+    flex-basis: 20px;
+  }
+  .window.dialog .title-btn {
+    width: 22px;
+    height: 18px;
+    min-width: 22px;
+    min-height: 18px;
+    flex-basis: 22px;
   }
 
-  /* Touch targets. 21px tall was fine with a mouse and is not fine with a thumb. */
-  button {
+  /* viewport-fit=cover puts the teal under the notch and the home indicator, so
+     the body has to inset itself back out from under both. */
+  .window:not(.dialog) .title-bar {
+    padding-left: max(6px, env(safe-area-inset-left));
+    padding-right: max(4px, env(safe-area-inset-right));
+  }
+  .window:not(.dialog) .window-body {
+    padding: 0 max(3px, env(safe-area-inset-right)) max(3px, env(safe-area-inset-bottom))
+      max(3px, env(safe-area-inset-left));
+  }
+
+  /* Touch targets. 21px tall was fine with a mouse and is not fine with a thumb.
+     Caption buttons are excluded: they are sized above, and `button:active:not()`
+     out-specifies `.title-btn:active`, which would pad the X off its centre. */
+  button:not(.title-btn) {
     min-height: 32px;
     padding: 6px 12px;
   }
-  button:active:not(:disabled) {
+  button:not(.title-btn):active:not(:disabled) {
     padding: 7px 11px 5px 13px;
   }
   button.tool {

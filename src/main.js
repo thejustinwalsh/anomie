@@ -58,8 +58,34 @@ function colophon() {
   document.body.appendChild(el);
 }
 
+/**
+ * Drive the shell height from visualViewport rather than trusting dvh.
+ *
+ * On iOS the layout viewport does not shrink when the keyboard opens — it slides
+ * — so a 100dvh shell keeps its full height and pushes the compose box and the
+ * Send button under the keyboard. visualViewport reports the part actually
+ * visible, which is the number we want. `interactive-widget=resizes-content` in
+ * the viewport meta makes Chrome behave the same way.
+ *
+ * Written to a custom property so CSS keeps ownership of the layout; the dvh
+ * fallback in style.css covers browsers with no visualViewport at all.
+ */
+function trackViewport() {
+  const vv = window.visualViewport;
+  if (!vv) return;
+  const apply = () => {
+    document.documentElement.style.setProperty('--shell-h', `${Math.round(vv.height)}px`);
+  };
+  apply();
+  vv.addEventListener('resize', apply);
+  // Scrolling the visual viewport (which is what the keyboard actually does on
+  // iOS) changes what is visible without firing resize.
+  vv.addEventListener('scroll', apply);
+}
+
 function boot() {
   applyFavicon(0);
+  trackViewport();
   mountBackdrop();
   colophon();
 
