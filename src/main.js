@@ -123,8 +123,32 @@ function trackViewport() {
   window.addEventListener('orientationchange', apply);
 }
 
+/**
+ * Hold the viewport still.
+ *
+ * Safari has ignored user-scalable=no since iOS 10, so the meta tag alone does
+ * not stop a pinch. These are the two gestures that survive it: Safari's own
+ * gesture events, and a double-tap (which touch-action: manipulation handles in
+ * CSS, but only where it is honoured).
+ *
+ * This is a fixed shell with no scrollable document behind it and type already
+ * sized up for a phone, so there is nothing zooming would reveal. It is a
+ * deliberate trade: pinch-to-zoom is an accessibility affordance, and it is
+ * being given up to stop the window drifting off screen.
+ */
+function lockZoom() {
+  ['gesturestart', 'gesturechange', 'gestureend'].forEach((type) =>
+    document.addEventListener(type, (e) => e.preventDefault(), { passive: false })
+  );
+  // Double-tap is handled by touch-action: manipulation in CSS, deliberately
+  // and not with a touchend guard. Calling preventDefault on touchend also
+  // suppresses the click Safari synthesises from it, so two quick taps on Send
+  // would lose the second one — a worse bug than the one being fixed.
+}
+
 function boot() {
   applyFavicon(0);
+  lockZoom();
   trackViewport();
   mountBackdrop();
   colophon();

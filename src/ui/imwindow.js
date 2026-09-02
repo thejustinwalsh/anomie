@@ -3,7 +3,7 @@
  * Warn and Block sitting next to Send exactly where they used to, because half
  * the reason those buttons are memorable is that they were right there.
  */
-import { createWindow, createMenuBar } from './window.js';
+import { createWindow, createMenuBar, isCompactLayout } from './window.js';
 import { primeMessages } from '../buddies.js';
 import * as sounds from '../sounds.js';
 import * as store from '../store.js';
@@ -195,7 +195,10 @@ export function openIM(buddy, deps = {}) {
     height: 372,
     x: 240 + ((count * 26) % 180),
     y: 40 + ((count * 24) % 160),
-    onClose: () => open.delete(buddy.screenName),
+    onClose: () => {
+      bp.removeEventListener('change', onBreakpoint);
+      open.delete(buddy.screenName);
+    },
   });
 
   // --- format state -------------------------------------------------------
@@ -410,10 +413,23 @@ export function openIM(buddy, deps = {}) {
     compose.style.fontStyle = fmt.italic ? 'italic' : 'normal';
     compose.style.textDecoration = fmt.underline ? 'underline' : 'none';
     compose.style.fontFamily = fmt.font;
-    compose.style.fontSize = fmt.size + 'px';
     compose.style.color = fmt.color;
+
+    // Safari zooms the viewport whenever it focuses an element rendering below
+    // 16px. The size dropdown writes fmt.size here as an inline style, and
+    // inline beats any stylesheet rule — so on a phone this one line was
+    // re-arming the zoom every time, and defeating the 16px floor set in CSS.
+    // The chosen size still travels with the message; it is only what the box
+    // *displays at* that gets clamped, and only on a touch layout.
+    compose.style.fontSize =
+      (isCompactLayout() ? Math.max(fmt.size, 16) : fmt.size) + 'px';
   }
   applyFormat();
+
+  // Rotating across the breakpoint changes whether that clamp applies.
+  const bp = window.matchMedia('(max-width: 767px)');
+  const onBreakpoint = () => applyFormat();
+  bp.addEventListener('change', onBreakpoint);
 
   // Drag the splitter to trade history height for compose height.
   splitter.addEventListener('mousedown', (e) => {

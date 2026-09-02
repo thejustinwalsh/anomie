@@ -89,6 +89,9 @@ body {
   text-rendering: geometricPrecision;
   cursor: default;
   user-select: none;
+  /* Kills the double-tap-to-zoom delay and gesture. Every tap here is a click
+     on a control; nothing in a fixed 1998 shell wants to be zoomed into. */
+  touch-action: manipulation;
 }
 
 img,
@@ -962,9 +965,13 @@ select {
     min-width: 34px;
     min-height: 34px;
   }
+  /* 16px, not 12px. Safari zooms the viewport when any form control it focuses
+     is under 16px, and that includes a <select> — tapping the font or size
+     dropdown was the zoom nobody could find, because the inputs on the sign-on
+     screen had already been fixed and the compose box is a contenteditable. */
   select {
     height: 30px;
-    font-size: 12px;
+    font-size: 16px;
   }
 
   .menu-item {
@@ -1021,7 +1028,8 @@ select {
   }
   .im-compose {
     flex-basis: 92px;
-    font-size: 15px;
+    /* At or above Safari's 16px floor, so focusing it can never zoom either. */
+    font-size: 16px;
     padding: 6px 7px;
   }
   .im-split {
@@ -1052,6 +1060,8 @@ select {
   html.short-viewport .im-history {
     font-size: 14px;
   }
+  /* .im-history may shrink its type on a short viewport; .im-compose may not.
+     It is focusable, and anything focusable under 16px re-arms the zoom. */
   .im-actions button {
     min-width: 0;
     flex: 1;
